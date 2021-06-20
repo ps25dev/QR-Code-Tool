@@ -6,7 +6,7 @@ android {
     compileSdkVersion 30
 
     defaultConfig {
-        applicationId "com.example.qrcodetool"
+        applicationId "com.ps25dev.qrcodetool"
         minSdkVersion 24
         targetSdkVersion 30
         versionCode 1

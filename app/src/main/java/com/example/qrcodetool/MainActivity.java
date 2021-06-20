@@ -6,12 +6,17 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.zxing.Result;
@@ -21,24 +26,28 @@ import me.dm7.barcodescanner.zxing.ZXingScannerView;
 public class MainActivity extends AppCompatActivity implements ZXingScannerView.ResultHandler{
 
     private final String TAG = "MainActivity";
-    private ImageButton imageButton;
+    private ImageButton imageButtonScan;
+    private ImageButton imageButtonCopy;
+    private TextView textViewResult;
     private ZXingScannerView mScannerView = null;
-
     private ViewGroup scanButtonViewGroup;
+    private String qrCodeResult = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mScannerView = new ZXingScannerView(this);   //initialize the scanner view
-        imageButton = findViewById(R.id.imageButtonScan);
+        imageButtonScan = findViewById(R.id.imageButtonScan);
+        imageButtonCopy = findViewById(R.id.imageButtonCopy);
+        textViewResult = findViewById(R.id.textViewResult);
         scanButtonViewGroup = (ViewGroup) ((ViewGroup) (findViewById(android.R.id.content))).getChildAt(0);
         initMainActivityUiComponents();
     }
 
 
     private void initMainActivityUiComponents(){
-        imageButton.setOnClickListener(new View.OnClickListener() {
+        imageButtonScan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(isCameraPermissionGranted()){
@@ -46,6 +55,20 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
                 }
                 else{
                     requestCameraPermission();
+                }
+            }
+        });
+
+        imageButtonCopy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(qrCodeResult!=null && !qrCodeResult.equals("")){
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("Qr result", qrCodeResult);
+                    clipboard.setPrimaryClip(clip);
+                }
+                else{
+                    Toast.makeText(getApplicationContext(),"Result not available.\nscan and try again!",Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -58,7 +81,9 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
         mScannerView.stopCamera();
         mScannerView.stopCameraPreview();
         setContentView(scanButtonViewGroup);
-        Toast.makeText(this,""+result.getText(),Toast.LENGTH_LONG).show();
+        qrCodeResult = result.getText();
+        textViewResult.setText(qrCodeResult);
+        //Toast.makeText(this,""+result.getText(),Toast.LENGTH_LONG).show();
     }
 
 
@@ -82,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
             mScannerView.stopCamera();
             mScannerView.stopCameraPreview();
             setContentView(scanButtonViewGroup);
+            qrCodeResult = "";
         }
         else {
             super.onBackPressed();
@@ -109,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements ZXingScannerView.
 
 
     private void scanQRCode(){
+        qrCodeResult = "";
         setContentView(mScannerView);
         mScannerView.setResultHandler(this); // Register handler for scan results.
         mScannerView.startCamera();         // Start camera
